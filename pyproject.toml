@@ -40,12 +40,13 @@ dev = [
     "types-pyyaml>=6.0.12.20250915",
     "tzdata>=2025.3",
     "pytest-xdist>=3.6.1",
-    "dbt-postgres>=1.10.0",
     "psycopg2-binary>=2.9.11",
     "dlt>=1.24.0",
     "beautifulsoup4>=4.14.3",
     "requests>=2.33.0",
     "pydantic-settings>=2.13.1",
+    "dbt-postgres==1.8.2",
+    "dbt-extractor==0.5.1",
 ]
 
 [tool.hatch.build.targets.wheel]
