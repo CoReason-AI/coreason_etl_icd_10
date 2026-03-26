@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: "Raw schemas populated by DLT extraction pipelines."
+    tables:
+      - name: icd10_cm_raw
+        description: "JSONB payload containing CMS ICD-10 data by fiscal year."
+        columns:
+          - name: fiscal_year
+            description: "The fiscal year of the CMS release."
+            data_type: int
+          - name: _dlt_load_id
+            description: "Internal metadata id managed by dlt"
+          - name: raw_data
+            description: "JSONB dictionary representing the single line parsed data."
+            data_type: jsonb
