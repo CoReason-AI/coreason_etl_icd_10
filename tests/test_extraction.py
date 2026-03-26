@@ -98,12 +98,14 @@ def test_extract_and_parse_success() -> None:
     assert len(records) == 2
 
     assert records[0]["fiscal_year"] == 2024
+    assert records[0]["raw_code"] == "A000"
     assert records[0]["raw_data"]["raw_code"] == "A000"
     assert records[0]["raw_data"]["hipaa_flag"] == "1"
     assert records[0]["raw_data"]["short_description"] == "Cholera short desc"
     assert records[0]["raw_data"]["long_description"] == "Cholera long desc"
 
     assert records[1]["fiscal_year"] == 2024
+    assert records[1]["raw_code"] == "B99"
     assert records[1]["raw_data"]["raw_code"] == "B99"
     assert records[1]["raw_data"]["hipaa_flag"] == "0"
     assert records[1]["raw_data"]["short_description"] == "Other short desc"

@@ -26,6 +26,7 @@ from coreason_etl_icd_10.utils.logger import logger
 @dlt.resource(
     name="icd10_cm_raw",
     write_disposition="merge",
+    primary_key=("fiscal_year", "raw_code"),
     max_table_nesting=0,
 )
 def fetch_icd10_cm_raw(manifest: DiagnosticConfigManifest | None = None) -> Generator[dict[str, Any]]:
