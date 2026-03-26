@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: gold_icd10_clinical_index
+    description: "Analytics-ready clean index of distinct ICD-10 codes prioritizing recent fiscal years."
+    columns:
+      - name: formatted_icd10_code
+        tests:
+          - unique
+          - not_null
+      - name: long_description
+        tests:
+          - not_null
+
+  - name: gold_icd10_billable_leaves
+    description: "Filtered view containing strictly billable diagnostic codes."
+    columns:
+      - name: formatted_icd10_code
+        tests:
+          - not_null
+      - name: fiscal_year
+        tests:
+          - not_null
