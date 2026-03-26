@@ -75,4 +75,4 @@ class EpistemicIcd10ExtractionTask:
                         continue
 
                     parsed_dict = EpistemicIcd10ExtractionTask.parse_icd10_line(line)
-                    yield {"fiscal_year": fiscal_year, "raw_data": parsed_dict}
+                    yield {"fiscal_year": fiscal_year, "raw_code": parsed_dict["raw_code"], "raw_data": parsed_dict}

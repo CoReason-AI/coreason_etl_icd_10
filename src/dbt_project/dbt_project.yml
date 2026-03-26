@@ -12,6 +12,9 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+on-run-start:
+  - 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+
 models:
   coreason_etl_icd_10:
     +materialized: table
