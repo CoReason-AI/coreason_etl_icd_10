@@ -28,8 +28,8 @@ def test_dlt_pipeline_success() -> None:
     )
 
     mock_records = [
-        {"fiscal_year": 2024, "raw_data": {"raw_code": "A000"}},
-        {"fiscal_year": 2024, "raw_data": {"raw_code": "B99"}},
+        {"fiscal_year": 2024, "raw_code": "A000", "raw_data": {"raw_code": "A000"}},
+        {"fiscal_year": 2024, "raw_code": "B99", "raw_data": {"raw_code": "B99"}},
     ]
 
     with patch("coreason_etl_icd_10.pipeline.EpistemicCmsDiscoveryTask.discover_zip_url") as mock_discover:
@@ -48,6 +48,7 @@ def test_dlt_pipeline_success() -> None:
 
                 assert len(results) == 2
                 assert results[0]["fiscal_year"] == 2024
+                assert results[0]["raw_code"] == "A000"
                 assert results[0]["raw_data"]["raw_code"] == "A000"
 
                 mock_discover.assert_called_once_with(mock_manifest)
