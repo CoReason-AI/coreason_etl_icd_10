@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: icd10_ontology
+    description: "Silver layer clean table standardizing ICD-10 codes."
+    tests:
+      - unique:
+          column_name: "(formatted_icd10_code || '-' || fiscal_year)"
+    columns:
+      - name: coreason_id
+        description: "UUID5 Identity Resolution based on the ICD10 Namespace and formatted code."
+        tests:
+          - unique
+          - not_null
+      - name: formatted_icd10_code
+        description: "Standardized code with proper decimal placement."
+        tests:
+          - not_null
+      - name: fiscal_year
+        description: "The CMS fiscal year."
+        tests:
+          - not_null
+      - name: long_description
+        description: "The long-form clinical description of the code."
+        tests:
+          - not_null
