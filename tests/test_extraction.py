@@ -17,6 +17,8 @@ import zipfile
 
 import pytest
 import responses
+from hypothesis import given
+from hypothesis import strategies as st
 
 from coreason_etl_icd_10.extraction import EpistemicIcd10ExtractionTask
 
@@ -133,3 +135,36 @@ def test_extract_and_parse_file_not_found() -> None:
     with pytest.raises(FileNotFoundError, match="Could not find a valid ICD-10 codes text file"):
         # The generator must be consumed to trigger the error
         list(EpistemicIcd10ExtractionTask.extract_and_parse(zip_url, 2024))
+
+
+@given(
+    code=st.text(min_size=7, max_size=7),
+    hipaa=st.text(min_size=1, max_size=1),
+    short_desc=st.text(min_size=60, max_size=60),
+    long_desc=st.text(min_size=1),
+)
+def test_parse_icd10_line_property_based(code: str, hipaa: str, short_desc: str, long_desc: str) -> None:
+    """Validate parsing with randomized edge cases representing the fixed-width fields."""
+    # Reconstruct a line according to the expected 72+ character format
+    # Chars 1-7: code
+    # Char 8: blank
+    # Char 9: hipaa
+    # Char 10: blank
+    # Chars 11-70: short desc
+    # Char 71: blank
+    # Chars 72+: long desc
+    constructed_line = f"{code} {hipaa} {short_desc} {long_desc}"
+
+    parsed = EpistemicIcd10ExtractionTask.parse_icd10_line(constructed_line)
+
+    assert parsed["raw_code"] == code.strip()
+    assert parsed["hipaa_flag"] == hipaa.strip()
+    assert parsed["short_description"] == short_desc.strip()
+    assert parsed["long_description"] == long_desc.strip()
+
+
+@given(short_line=st.text(max_size=71))
+def test_parse_icd10_line_property_based_too_short(short_line: str) -> None:
+    """Validate that any line under 72 characters consistently raises an exception."""
+    with pytest.raises(ValueError, match="Line is too short"):
+        EpistemicIcd10ExtractionTask.parse_icd10_line(short_line)
