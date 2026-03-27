@@ -14,6 +14,9 @@ Test suite validating the Epistemic policies for ICD-10 pipeline configuration.
 
 import os
 
+from hypothesis import given
+from hypothesis import strategies as st
+
 from coreason_etl_icd_10.config import DiagnosticConfigManifest
 
 
@@ -45,3 +48,17 @@ def test_config_manifest_env_override() -> None:
     # Clean up
     del os.environ["CMS_ENDPOINT_BASE_URL"]
     del os.environ["DIRECT_ZIP_URL_OVERRIDE"]
+
+
+@given(
+    st.text(min_size=1),
+    st.one_of(st.none(), st.text(min_size=1)),
+)
+def test_config_manifest_property_based(cms_url: str, override_url: str | None) -> None:
+    """Validate Pydantic properties using hypothesis generated edge cases."""
+    manifest = DiagnosticConfigManifest(
+        cms_endpoint_base_url=cms_url,
+        direct_zip_url_override=override_url,
+    )
+    assert manifest.cms_endpoint_base_url == cms_url
+    assert manifest.direct_zip_url_override == override_url
