@@ -88,3 +88,31 @@ def test_main_exception_handling(mock_run_dlt: MagicMock) -> None:
 
     with pytest.raises(ValueError, match="Mock dlt error"):
         main()
+
+
+@patch("coreason_etl_icd_10.main.EpistemicOrchestrationIntent.run_dlt_pipeline")
+@patch("coreason_etl_icd_10.main.EpistemicOrchestrationIntent.run_dbt_transformations")
+def test_main_dbt_failure_after_dlt_success(mock_run_dbt: MagicMock, mock_run_dlt: MagicMock) -> None:
+    """Validate exception handling when dlt succeeds but dbt fails."""
+    # dlt succeeds, so no side effect is set.
+    mock_run_dbt.side_effect = RuntimeError("DBT run failed with exit code 1")
+
+    with pytest.raises(RuntimeError, match="DBT run failed with exit code 1"):
+        main()
+
+    # Verify both dlt and dbt were called in order
+    mock_run_dlt.assert_called_once()
+    mock_run_dbt.assert_called_once()
+
+
+@patch("coreason_etl_icd_10.main.DiagnosticConfigManifest")
+@patch("coreason_etl_icd_10.main.EpistemicOrchestrationIntent.run_dlt_pipeline")
+def test_main_initialization_failure(mock_run_dlt: MagicMock, mock_manifest: MagicMock) -> None:
+    """Validate orchestration handles initialization errors correctly."""
+    mock_manifest.side_effect = TypeError("Invalid configuration passed")
+
+    with pytest.raises(TypeError, match="Invalid configuration passed"):
+        main()
+
+    # DLT pipeline should never be called due to config failure
+    mock_run_dlt.assert_not_called()
