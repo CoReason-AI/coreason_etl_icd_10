@@ -41,3 +41,7 @@ models:
         tests:
           - accepted_values:
               values: [true]
+      - name: ingestion_ts
+        description: "Timestamp of ingestion."
+        tests:
+          - not_null
