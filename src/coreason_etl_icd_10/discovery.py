@@ -9,60 +9,47 @@
 # Source Code: https://github.com/CoReason-AI/coreason_etl_icd_10
 
 """
-Discovery module for locating the CMS ICD-10 ZIP payload.
+Discovery module for locating the CMS ICD-10 ZIP payload locally.
 """
 
 import re
-from urllib.parse import urljoin
-
-from bs4 import BeautifulSoup
+from pathlib import Path
 
 from coreason_etl_icd_10.config import DiagnosticConfigManifest
-from coreason_etl_icd_10.utils.http_client import EpistemicHttpClient
 from coreason_etl_icd_10.utils.logger import logger
 
 
 class EpistemicCmsDiscoveryTask:
     """
-    EpistemicCmsDiscoveryTask to perform HTML scraping and URL extraction.
+    EpistemicCmsDiscoveryTask to perform local path resolution and fiscal year extraction.
 
-    AGENT INSTRUCTION: This class deterministically locates the CMS ZIP file URL
-    and extracts the applicable fiscal year from the URL or filename.
+    AGENT INSTRUCTION: This class deterministically resolves the local path to the
+    CMS ZIP file and extracts the applicable fiscal year from the filename.
     """
 
     @staticmethod
-    def extract_fiscal_year(url: str) -> int:
+    def extract_fiscal_year(filepath: str) -> int:
         """
-        Extracts the 4-digit fiscal year from the given URL or filename.
+        Extracts the 4-digit fiscal year from the given file path.
         Raises ValueError if not found.
         """
         # Regex to find any 4-digit number starting with 20
-        match = re.search(r"(20\d{2})", url)
+        match = re.search(r"(20\d{2})", filepath)
         if not match:
-            raise ValueError(f"Could not extract fiscal year from URL: {url}")
+            raise ValueError(f"Could not extract fiscal year from path: {filepath}")
         return int(match.group(1))
 
     @staticmethod
-    def discover_zip_url(manifest: DiagnosticConfigManifest) -> str:
+    def resolve_local_zip_path(manifest: DiagnosticConfigManifest) -> str:
         """
-        Discovers the ZIP file URL either via fallback override or HTML scraping.
-        Raises ValueError if the ZIP link cannot be found in the HTML.
+        Resolves the local ZIP file path from configuration.
+        Raises FileNotFoundError if the file does not exist locally.
         """
-        if manifest.direct_zip_url_override:
-            logger.info("Using direct ZIP URL override from configuration.")
-            return manifest.direct_zip_url_override
+        local_path = manifest.local_zip_path
+        logger.info(f"Resolving local ZIP path: {local_path}")
 
-        logger.info(f"Discovering ZIP URL from CMS endpoint: {manifest.cms_endpoint_base_url}")
-        response = EpistemicHttpClient.get(manifest.cms_endpoint_base_url)
-        soup = BeautifulSoup(response.content, "html.parser")
+        path_obj = Path(local_path)
+        if not path_obj.exists() or not path_obj.is_file():
+            raise FileNotFoundError(f"Configured local ZIP file does not exist: {local_path}")
 
-        # Look for any link that ends in .zip
-        for a_tag in soup.find_all("a", href=True):
-            href = str(a_tag["href"])
-            if href.lower().endswith(".zip"):
-                # Handle relative URLs
-                full_url = urljoin(manifest.cms_endpoint_base_url, href)
-                logger.info(f"Discovered ZIP URL: {full_url}")
-                return full_url
-
-        raise ValueError("Could not locate a .zip file link on the CMS endpoint page.")
+        return str(path_obj.absolute())

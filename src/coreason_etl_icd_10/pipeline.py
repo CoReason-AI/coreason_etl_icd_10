@@ -31,7 +31,7 @@ from coreason_etl_icd_10.utils.logger import logger
 )
 def fetch_icd10_cm_raw(manifest: DiagnosticConfigManifest | None = None) -> Generator[dict[str, Any]]:
     """
-    DLT Resource mapping the entire pipeline from HTML discovery to JSONB payload yielding.
+    DLT Resource mapping the entire pipeline from local discovery to JSONB payload yielding.
 
     AGENT INSTRUCTION: This generator yields nested dicts where `max_table_nesting=0`
     forces dlt to store `raw_data` natively as a JSONB object in PostgreSQL, allowing
@@ -43,12 +43,12 @@ def fetch_icd10_cm_raw(manifest: DiagnosticConfigManifest | None = None) -> Gene
     logger.info("Initializing ICD-10 pipeline execution.")
 
     try:
-        zip_url = EpistemicCmsDiscoveryTask.discover_zip_url(manifest)
-        fiscal_year = EpistemicCmsDiscoveryTask.extract_fiscal_year(zip_url)
+        local_path = EpistemicCmsDiscoveryTask.resolve_local_zip_path(manifest)
+        fiscal_year = EpistemicCmsDiscoveryTask.extract_fiscal_year(local_path)
 
-        logger.info(f"Resolved ingestion target: {zip_url} (Fiscal Year: {fiscal_year})")
+        logger.info(f"Resolved ingestion target: {local_path} (Fiscal Year: {fiscal_year})")
 
-        yield from EpistemicIcd10ExtractionTask.extract_and_parse(zip_url, fiscal_year)
+        yield from EpistemicIcd10ExtractionTask.extract_and_parse(local_path, fiscal_year)
         logger.info("Pipeline execution completed successfully.")
 
     except Exception as e:

@@ -21,20 +21,13 @@ class DiagnosticConfigManifest(BaseSettings):
     EpistemicIngestionPolicy to manage the boundaries and location of the CMS ICD-10 payload.
 
     AGENT INSTRUCTION: This class deterministically manages the configurations for the
-    in-memory extraction process and HTTP ingestion pathways, protecting the Knowledge Graph
+    in-memory extraction process and local ingestion pathways, protecting the Knowledge Graph
     from drift.
     """
 
-    cms_endpoint_base_url: str = Field(
-        default="https://www.cms.gov/medicare/coding-billing/icd-10-codes/2024-icd-10-cm",
-        description="The primary HTTP destination containing the HTML page with the CMS ZIP asset link.",
-    )
-    direct_zip_url_override: str | None = Field(
-        default=None,
-        description=(
-            "Optional fallback URL for the ZIP payload, bypassing the HTML "
-            "discovery step if anti-bot measures are encountered."
-        ),
+    local_zip_path: str = Field(
+        default="./data/icd10cm_codes_2024.zip",
+        description="The absolute or relative local path pointing to the CMS ICD-10 ZIP payload.",
     )
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

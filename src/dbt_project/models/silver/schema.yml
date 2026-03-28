@@ -22,6 +22,10 @@ models:
         description: "The CMS fiscal year."
         tests:
           - not_null
+      - name: ingestion_ts
+        description: "Timestamp of ingestion."
+        tests:
+          - not_null
       - name: long_description
         description: "The long-form clinical description of the code."
         tests:

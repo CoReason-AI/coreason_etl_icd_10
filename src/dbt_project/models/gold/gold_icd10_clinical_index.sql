@@ -10,6 +10,10 @@ WITH ranked_descriptions AS (
         formatted_icd10_code,
         long_description,
         fiscal_year,
+        ingestion_ts,
+        raw_code_string,
+        short_description,
+        is_billable,
         ROW_NUMBER() OVER (
             PARTITION BY formatted_icd10_code
             ORDER BY fiscal_year DESC
@@ -19,6 +23,11 @@ WITH ranked_descriptions AS (
 
 SELECT
     formatted_icd10_code,
-    long_description
+    long_description,
+    fiscal_year,
+    ingestion_ts,
+    raw_code_string,
+    short_description,
+    is_billable
 FROM ranked_descriptions
 WHERE rn = 1
