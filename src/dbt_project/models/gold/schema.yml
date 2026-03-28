@@ -2,22 +2,28 @@ version: 2
 
 models:
   - name: gold_icd10_clinical_index
-    description: "Analytics-ready clean index of distinct ICD-10 codes prioritizing recent fiscal years."
+    description: "Gold layer clinical index for searchable ICD-10 codes."
     columns:
       - name: formatted_icd10_code
+        description: "Standardized code with proper decimal placement."
         tests:
           - unique
           - not_null
       - name: long_description
+        description: "The long-form clinical description of the code from the most recent fiscal year."
         tests:
           - not_null
 
   - name: gold_icd10_billable_leaves
-    description: "Filtered view containing strictly billable diagnostic codes."
+    description: "Gold layer billable leaves for ICD-10 codes."
     columns:
-      - name: formatted_icd10_code
+      - name: coreason_id
+        description: "UUID5 Identity Resolution based on the ICD10 Namespace and formatted code."
         tests:
+          - unique
           - not_null
-      - name: fiscal_year
+      - name: is_billable
+        description: "Boolean indicating if the code is billable."
         tests:
-          - not_null
+          - accepted_values:
+              values: [true]
