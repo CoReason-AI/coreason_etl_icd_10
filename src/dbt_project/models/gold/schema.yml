@@ -13,6 +13,20 @@ models:
         description: "The long-form clinical description of the code from the most recent fiscal year."
         tests:
           - not_null
+      - name: fiscal_year
+        description: "The CMS fiscal year."
+        tests:
+          - not_null
+      - name: ingestion_ts
+        description: "Timestamp of ingestion."
+        tests:
+          - not_null
+      - name: raw_code_string
+        description: "Original 7-char string from Bronze layer."
+      - name: short_description
+        description: "Trimmed short description."
+      - name: is_billable
+        description: "Boolean indicating if the code is billable."
 
   - name: gold_icd10_billable_leaves
     description: "Gold layer billable leaves for ICD-10 codes."

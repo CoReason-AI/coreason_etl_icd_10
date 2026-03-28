@@ -9,6 +9,7 @@
 WITH source AS (
     SELECT
         fiscal_year,
+        ingestion_ts,
         raw_data->>'raw_code' AS raw_code_string,
         raw_data->>'short_description' AS short_description,
         raw_data->>'long_description' AS long_description,
@@ -19,6 +20,7 @@ WITH source AS (
 cleaned AS (
     SELECT
         fiscal_year,
+        ingestion_ts,
         trim(raw_code_string) AS raw_code_string,
         trim(short_description) AS short_description,
         trim(long_description) AS long_description,
@@ -31,6 +33,7 @@ cleaned AS (
 
 SELECT
     fiscal_year,
+    ingestion_ts,
     raw_code_string,
     {{ icd10_decimal_injector('raw_code_string') }} AS formatted_icd10_code,
     uuid_generate_v5(uuid_ns_url(), {{ icd10_decimal_injector('raw_code_string') }}) AS coreason_id,

@@ -9,14 +9,13 @@
 # Source Code: https://github.com/CoReason-AI/coreason_etl_icd_10
 
 """
-Test suite validating In-Memory ZIP Extraction and Fixed-Width Parsing.
+Test suite validating Local ZIP Extraction and Fixed-Width Parsing.
 """
 
-import io
 import zipfile
+from pathlib import Path
 
 import pytest
-import responses
 from hypothesis import given
 from hypothesis import strategies as st
 
@@ -67,40 +66,31 @@ def test_parse_icd10_line_too_short() -> None:
         EpistemicIcd10ExtractionTask.parse_icd10_line("A000    1 Too Short")
 
 
-@responses.activate
-def test_extract_and_parse_success() -> None:
+def test_extract_and_parse_success(tmp_path: Path) -> None:
     """Validate downloading a ZIP in memory, finding the file, and parsing it correctly."""
-    zip_url = "https://example.com/2024.zip"
+    zip_path = tmp_path / "2024.zip"
     fiscal_year = 2024
 
-    # Create an in-memory ZIP file with a valid txt payload
+    # Create a local ZIP file with a valid txt payload
     txt_content = (
         "A000    1 Cholera short desc" + (" " * 42) + " Cholera long desc\n"
         "B99     0 Other short desc" + (" " * 44) + " Other long desc\n"
     )
 
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w") as zf:
+    with zipfile.ZipFile(zip_path, "w") as zf:
         # Include an empty line in the actual content to hit the coverage for the continue branch
         txt_content_with_empty = "\n\r\n" + txt_content + "\n"
         zf.writestr("icd10cm_codes_2024.txt", txt_content_with_empty)
         # Add a decoy file just to ensure it targets the correct one
         zf.writestr("decoy.pdf", "not text")
 
-    responses.add(
-        responses.GET,
-        zip_url,
-        body=zip_buffer.getvalue(),
-        status=200,
-        content_type="application/zip",
-    )
-
-    records = list(EpistemicIcd10ExtractionTask.extract_and_parse(zip_url, fiscal_year))
+    records = list(EpistemicIcd10ExtractionTask.extract_and_parse(str(zip_path), fiscal_year))
 
     assert len(records) == 2
 
     assert records[0]["fiscal_year"] == 2024
     assert records[0]["raw_code"] == "A000"
+    assert "ingestion_ts" in records[0]
     assert records[0]["raw_data"]["raw_code"] == "A000"
     assert records[0]["raw_data"]["hipaa_flag"] == "1"
     assert records[0]["raw_data"]["short_description"] == "Cholera short desc"
@@ -108,33 +98,24 @@ def test_extract_and_parse_success() -> None:
 
     assert records[1]["fiscal_year"] == 2024
     assert records[1]["raw_code"] == "B99"
+    assert "ingestion_ts" in records[1]
     assert records[1]["raw_data"]["raw_code"] == "B99"
     assert records[1]["raw_data"]["hipaa_flag"] == "0"
     assert records[1]["raw_data"]["short_description"] == "Other short desc"
     assert records[1]["raw_data"]["long_description"] == "Other long desc"
 
 
-@responses.activate
-def test_extract_and_parse_file_not_found() -> None:
+def test_extract_and_parse_file_not_found(tmp_path: Path) -> None:
     """Validate that extraction fails when the ZIP doesn't contain the expected text file."""
-    zip_url = "https://example.com/2024_bad.zip"
+    zip_path = tmp_path / "2024_bad.zip"
 
-    # Create an in-memory ZIP with no text file
-    zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, "w") as zf:
+    # Create a local ZIP with no text file
+    with zipfile.ZipFile(zip_path, "w") as zf:
         zf.writestr("decoy.pdf", "not text")
-
-    responses.add(
-        responses.GET,
-        zip_url,
-        body=zip_buffer.getvalue(),
-        status=200,
-        content_type="application/zip",
-    )
 
     with pytest.raises(FileNotFoundError, match="Could not find a valid ICD-10 codes text file"):
         # The generator must be consumed to trigger the error
-        list(EpistemicIcd10ExtractionTask.extract_and_parse(zip_url, 2024))
+        list(EpistemicIcd10ExtractionTask.extract_and_parse(str(zip_path), 2024))
 
 
 @given(

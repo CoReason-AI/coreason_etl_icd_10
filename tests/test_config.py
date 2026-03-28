@@ -24,41 +24,32 @@ def test_config_manifest_defaults() -> None:
     """Validate that the DiagnosticConfigManifest loads defaults correctly."""
 
     # Temporarily remove any existing env vars to isolate the test
-    if "CMS_ENDPOINT_BASE_URL" in os.environ:
-        del os.environ["CMS_ENDPOINT_BASE_URL"]
-    if "DIRECT_ZIP_URL_OVERRIDE" in os.environ:
-        del os.environ["DIRECT_ZIP_URL_OVERRIDE"]
+    if "LOCAL_ZIP_PATH" in os.environ:
+        del os.environ["LOCAL_ZIP_PATH"]
 
     manifest = DiagnosticConfigManifest()
 
-    assert manifest.cms_endpoint_base_url == "https://www.cms.gov/medicare/coding-billing/icd-10-codes/2024-icd-10-cm"
-    assert manifest.direct_zip_url_override is None
+    assert manifest.local_zip_path == "./data/icd10cm_codes_2024.zip"
 
 
 def test_config_manifest_env_override() -> None:
     """Validate that environment variables properly override default configurations."""
-    os.environ["CMS_ENDPOINT_BASE_URL"] = "https://example.com/mock-cms"
-    os.environ["DIRECT_ZIP_URL_OVERRIDE"] = "https://example.com/mock-cms/file.zip"
+    os.environ["LOCAL_ZIP_PATH"] = "/var/lib/data/mock-cms/file.zip"
 
     manifest = DiagnosticConfigManifest()
 
-    assert manifest.cms_endpoint_base_url == "https://example.com/mock-cms"
-    assert manifest.direct_zip_url_override == "https://example.com/mock-cms/file.zip"
+    assert manifest.local_zip_path == "/var/lib/data/mock-cms/file.zip"
 
     # Clean up
-    del os.environ["CMS_ENDPOINT_BASE_URL"]
-    del os.environ["DIRECT_ZIP_URL_OVERRIDE"]
+    del os.environ["LOCAL_ZIP_PATH"]
 
 
 @given(
     st.text(min_size=1),
-    st.one_of(st.none(), st.text(min_size=1)),
 )
-def test_config_manifest_property_based(cms_url: str, override_url: str | None) -> None:
+def test_config_manifest_property_based(local_path: str) -> None:
     """Validate Pydantic properties using hypothesis generated edge cases."""
     manifest = DiagnosticConfigManifest(
-        cms_endpoint_base_url=cms_url,
-        direct_zip_url_override=override_url,
+        local_zip_path=local_path,
     )
-    assert manifest.cms_endpoint_base_url == cms_url
-    assert manifest.direct_zip_url_override == override_url
+    assert manifest.local_zip_path == local_path
