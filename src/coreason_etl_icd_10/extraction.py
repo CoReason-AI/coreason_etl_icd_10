@@ -12,12 +12,11 @@
 In-memory extraction and fixed-width parsing module for CMS ICD-10 data.
 """
 
-import io
 import zipfile
 from collections.abc import Generator
+from datetime import UTC, datetime
 from typing import Any
 
-from coreason_etl_icd_10.utils.http_client import EpistemicHttpClient
 from coreason_etl_icd_10.utils.logger import logger
 
 
@@ -47,15 +46,16 @@ class EpistemicIcd10ExtractionTask:
         }
 
     @staticmethod
-    def extract_and_parse(zip_url: str, fiscal_year: int) -> Generator[dict[str, Any]]:
+    def extract_and_parse(local_zip_path: str, fiscal_year: int) -> Generator[dict[str, Any]]:
         """
-        Downloads the ZIP into memory, locates the '.txt' file with 'icd10cm_codes' in the name,
-        and yields dict payloads for the Bronze table.
+        Reads the local ZIP file, locates the '.txt' file with 'icd10cm_codes' in the name,
+        and yields dict payloads for the Bronze table, injecting ingestion_ts.
         """
-        logger.info(f"Downloading ZIP payload from: {zip_url}")
-        response = EpistemicHttpClient.get(zip_url)
+        logger.info(f"Extracting local ZIP payload from: {local_zip_path}")
 
-        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+        ingestion_ts = datetime.now(UTC)
+
+        with zipfile.ZipFile(local_zip_path, "r") as z:
             # Locate the correct text file in the ZIP (case-insensitive check)
             target_filename = None
             for name in z.namelist():
@@ -64,7 +64,7 @@ class EpistemicIcd10ExtractionTask:
                     break
 
             if not target_filename:
-                raise FileNotFoundError(f"Could not find a valid ICD-10 codes text file in the ZIP at {zip_url}")
+                raise FileNotFoundError(f"Could not find a valid ICD-10 codes text file in the ZIP at {local_zip_path}")
 
             logger.info(f"Extracting and parsing text file: {target_filename}")
 
@@ -75,4 +75,9 @@ class EpistemicIcd10ExtractionTask:
                         continue
 
                     parsed_dict = EpistemicIcd10ExtractionTask.parse_icd10_line(line)
-                    yield {"fiscal_year": fiscal_year, "raw_code": parsed_dict["raw_code"], "raw_data": parsed_dict}
+                    yield {
+                        "fiscal_year": fiscal_year,
+                        "raw_code": parsed_dict["raw_code"],
+                        "ingestion_ts": ingestion_ts,
+                        "raw_data": parsed_dict,
+                    }

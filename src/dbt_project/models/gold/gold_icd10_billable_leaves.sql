@@ -8,6 +8,7 @@
 SELECT
     coreason_id,
     fiscal_year,
+    ingestion_ts,
     formatted_icd10_code,
     raw_code_string,
     short_description,

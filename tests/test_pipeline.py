@@ -23,17 +23,15 @@ from coreason_etl_icd_10.pipeline import fetch_icd10_cm_raw
 def test_dlt_pipeline_success() -> None:
     """Validate that the DLT resource generates records correctly."""
 
-    mock_manifest = DiagnosticConfigManifest(
-        cms_endpoint_base_url="https://mock.com", direct_zip_url_override="https://mock.com/2024.zip"
-    )
+    mock_manifest = DiagnosticConfigManifest(local_zip_path="/data/2024.zip")
 
     mock_records = [
         {"fiscal_year": 2024, "raw_code": "A000", "raw_data": {"raw_code": "A000"}},
         {"fiscal_year": 2024, "raw_code": "B99", "raw_data": {"raw_code": "B99"}},
     ]
 
-    with patch("coreason_etl_icd_10.pipeline.EpistemicCmsDiscoveryTask.discover_zip_url") as mock_discover:
-        mock_discover.return_value = "https://mock.com/2024.zip"
+    with patch("coreason_etl_icd_10.pipeline.EpistemicCmsDiscoveryTask.resolve_local_zip_path") as mock_resolve:
+        mock_resolve.return_value = "/data/2024.zip"
 
         with patch("coreason_etl_icd_10.pipeline.EpistemicCmsDiscoveryTask.extract_fiscal_year") as mock_extract_yr:
             mock_extract_yr.return_value = 2024
@@ -51,19 +49,19 @@ def test_dlt_pipeline_success() -> None:
                 assert results[0]["raw_code"] == "A000"
                 assert results[0]["raw_data"]["raw_code"] == "A000"
 
-                mock_discover.assert_called_once_with(mock_manifest)
-                mock_extract_yr.assert_called_once_with("https://mock.com/2024.zip")
-                mock_extract_parse.assert_called_once_with("https://mock.com/2024.zip", 2024)
+                mock_resolve.assert_called_once_with(mock_manifest)
+                mock_extract_yr.assert_called_once_with("/data/2024.zip")
+                mock_extract_parse.assert_called_once_with("/data/2024.zip", 2024)
 
 
 def test_dlt_pipeline_error_handling() -> None:
     """Validate that pipeline failures are re-raised correctly."""
 
-    with patch("coreason_etl_icd_10.pipeline.EpistemicCmsDiscoveryTask.discover_zip_url") as mock_discover:
-        mock_discover.side_effect = ValueError("Network failure")
+    with patch("coreason_etl_icd_10.pipeline.EpistemicCmsDiscoveryTask.resolve_local_zip_path") as mock_resolve:
+        mock_resolve.side_effect = ValueError("File not found")
 
         # DLT intercepts exceptions generated inside the pipeline generator
         # and wraps them in PipelineStepFailed or similar. Instead of matching exact type,
         # we check it's raised correctly.
-        with pytest.raises(Exception, match="Network failure"):
+        with pytest.raises(Exception, match="File not found"):
             list(fetch_icd10_cm_raw())
