@@ -3,7 +3,17 @@ version: 2
 models:
   - name: gold_icd10_clinical_index
     description: "Gold layer clinical index for searchable ICD-10 codes."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - formatted_icd10_code
+            - fiscal_year
     columns:
+      - name: coreason_id
+        description: "UUID5 Identity Resolution based on the ICD10 Namespace and formatted code."
+        tests:
+          - unique
+          - not_null
       - name: formatted_icd10_code
         description: "Standardized code with proper decimal placement."
         tests:
@@ -30,11 +40,32 @@ models:
 
   - name: gold_icd10_billable_leaves
     description: "Gold layer billable leaves for ICD-10 codes."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - formatted_icd10_code
+            - fiscal_year
     columns:
       - name: coreason_id
         description: "UUID5 Identity Resolution based on the ICD10 Namespace and formatted code."
         tests:
           - unique
+          - not_null
+      - name: fiscal_year
+        description: "The CMS fiscal year."
+        tests:
+          - not_null
+      - name: formatted_icd10_code
+        description: "Standardized code with proper decimal placement."
+        tests:
+          - not_null
+      - name: raw_code_string
+        description: "Original 7-char string from Bronze layer."
+      - name: short_description
+        description: "Trimmed short description."
+      - name: long_description
+        description: "The long-form clinical description of the code from the most recent fiscal year."
+        tests:
           - not_null
       - name: is_billable
         description: "Boolean indicating if the code is billable."
