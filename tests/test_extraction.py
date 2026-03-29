@@ -149,3 +149,43 @@ def test_parse_icd10_line_property_based_too_short(short_line: str) -> None:
     """Validate that any line under 72 characters consistently raises an exception."""
     with pytest.raises(ValueError, match="Line is too short"):
         EpistemicIcd10ExtractionTask.parse_icd10_line(short_line)
+
+
+def test_parse_icd10_line_extreme_whitespace() -> None:
+    """Validate that extreme whitespace in all fields is correctly stripped."""
+    test_line = (
+        "  A00  "  # code: '  A00  ' -> 'A00'
+        + " "  # char 8 blank
+        + " "  # char 9 hipaa (edge case: blank HIPAA flag instead of 1 or 0)
+        + " "  # char 10 blank
+        + (" " * 5)
+        + "Short desc"
+        + (" " * 45)  # chars 11-70 short desc
+        + " "  # char 71 blank
+        + (" " * 10)
+        + "Long desc with extra spaces   "  # long desc
+    )
+    assert len(test_line[:71]) == 71
+
+    parsed = EpistemicIcd10ExtractionTask.parse_icd10_line(test_line)
+
+    assert parsed["raw_code"] == "A00"
+    assert parsed["hipaa_flag"] == ""  # Blank stripped is empty
+    assert parsed["short_description"] == "Short desc"
+    assert parsed["long_description"] == "Long desc with extra spaces"
+
+
+def test_extract_and_parse_multiple_files_in_zip(tmp_path: Path) -> None:
+    """Validate correct file selection when multiple valid-looking text files exist in the ZIP."""
+    zip_path = tmp_path / "2024_multi.zip"
+    fiscal_year = 2024
+
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("some_other_file.txt", "not the right one")
+        # Target should be matched: "icd10cm_codes" + ".txt"
+        zf.writestr("ICD10CM_CODES_2024.TXT", "A000    1 Short" + (" " * 53) + " Long\n")
+        zf.writestr("another_icd10cm_codes_file.csv", "wrong extension")
+
+    records = list(EpistemicIcd10ExtractionTask.extract_and_parse(str(zip_path), fiscal_year))
+    assert len(records) == 1
+    assert records[0]["raw_code"] == "A000"

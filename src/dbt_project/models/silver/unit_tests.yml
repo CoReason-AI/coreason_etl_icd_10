@@ -11,6 +11,9 @@ unit_tests:
           - { "fiscal_year": 2024, "raw_data": { "raw_code": "A0000", "short_description": "short", "long_description": "long", "hipaa_flag": "1" } }
           - { "fiscal_year": 2024, "raw_data": { "raw_code": "E119   ", "short_description": "short", "long_description": "long", "hipaa_flag": "1" } }
           - { "fiscal_year": 2024, "raw_data": { "raw_code": "E11", "short_description": "short", "long_description": "long", "hipaa_flag": "1" } }
+          - { "fiscal_year": 2024, "raw_data": { "raw_code": "  Z00  ", "short_description": "short", "long_description": "long", "hipaa_flag": "1" } }
+          - { "fiscal_year": 2024, "raw_data": { "raw_code": "V0100XA", "short_description": "short", "long_description": "long", "hipaa_flag": "1" } }
+          - { "fiscal_year": 2024, "raw_data": { "raw_code": "A", "short_description": "short", "long_description": "long", "hipaa_flag": "1" } }
     expect:
       format: dict
       rows:
@@ -19,3 +22,6 @@ unit_tests:
         - { "raw_code_string": "A0000", "formatted_icd10_code": "A00.00" }
         - { "raw_code_string": "E119", "formatted_icd10_code": "E11.9" }
         - { "raw_code_string": "E11", "formatted_icd10_code": "E11" }
+        - { "raw_code_string": "Z00", "formatted_icd10_code": "Z00" }
+        - { "raw_code_string": "V0100XA", "formatted_icd10_code": "V01.00XA" }
+        - { "raw_code_string": "A", "formatted_icd10_code": "A" }
