@@ -11,6 +11,9 @@ seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
+on-run-start:
+  - 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+
 clean-targets:
   - "target"
   - "dbt_packages"
