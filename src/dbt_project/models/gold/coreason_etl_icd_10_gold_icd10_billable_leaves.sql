@@ -14,5 +14,5 @@ SELECT
     short_description,
     long_description,
     is_billable
-FROM {{ ref('icd10_ontology') }}
+FROM {{ ref('coreason_etl_icd_10_silver_icd10_ontology') }}
 WHERE is_billable = TRUE

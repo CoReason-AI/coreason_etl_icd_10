@@ -14,7 +14,7 @@ WITH source AS (
         raw_data->>'short_description' AS short_description,
         raw_data->>'long_description' AS long_description,
         raw_data->>'hipaa_flag' AS hipaa_flag
-    FROM {{ source('bronze', 'icd10_cm_raw') }}
+    FROM {{ source('bronze', 'coreason_etl_icd_10_bronze_icd10_cm_raw') }}
 ),
 
 cleaned AS (
