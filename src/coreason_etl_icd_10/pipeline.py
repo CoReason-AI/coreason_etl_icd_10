@@ -24,7 +24,7 @@ from coreason_etl_icd_10.utils.logger import logger
 
 
 @dlt.resource(
-    name="icd10_cm_raw",
+    name="coreason_etl_icd_10_bronze_icd10_cm_raw",
     write_disposition="merge",
     primary_key=("fiscal_year", "raw_code"),
     max_table_nesting=0,

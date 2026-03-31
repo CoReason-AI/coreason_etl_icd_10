@@ -4,5 +4,5 @@ sources:
   - name: bronze
     description: "Raw CMS ICD-10 data ingested via DLT"
     tables:
-      - name: icd10_cm_raw
+      - name: coreason_etl_icd_10_bronze_icd10_cm_raw
         description: "Raw JSONB records from the CMS fixed-width file"
