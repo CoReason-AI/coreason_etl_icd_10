@@ -5,9 +5,10 @@ models:
     description: "Silver layer clean table standardizing ICD-10 codes."
     tests:
       - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - formatted_icd10_code
-            - fiscal_year
+          arguments:
+            combination_of_columns:
+              - formatted_icd10_code
+              - fiscal_year
     columns:
       - name: coreason_id
         description: "UUID5 Identity Resolution based on the ICD10 Namespace and formatted code."

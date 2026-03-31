@@ -1,7 +1,7 @@
 unit_tests:
   - name: test_icd10_decimal_injector
     description: "Validates the `icd10_decimal_injector` macro through the `icd10_ontology` model. Ensures codes <= 3 chars remain unchanged, and codes > 3 chars get a decimal after the 3rd character."
-    model: icd10_ontology
+    model: coreason_etl_icd_10_silver_icd10_ontology
     given:
       - input: source('bronze', 'icd10_cm_raw')
         format: dict

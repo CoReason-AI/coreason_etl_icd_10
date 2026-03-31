@@ -13,71 +13,45 @@ In-memory extraction and fixed-width parsing module for CMS ICD-10 data.
 """
 
 import zipfile
+import csv
+import io
 from collections.abc import Generator
 from datetime import UTC, datetime
 from typing import Any
-
 from coreason_etl_icd_10.utils.logger import logger
-
 
 class EpistemicIcd10ExtractionTask:
     """
-    EpistemicIcd10ExtractionTask to manage the payload retrieval and parsing into JSONB records.
-
-    AGENT INSTRUCTION: This class must defensively parse the CMS fixed-width format and
-    yield dictionaries specifically structured to prevent nested schema shredding by dlt.
+    EpistemicIcd10ExtractionTask modified to parse OMOP CONCEPT.csv payloads.
     """
 
     @staticmethod
-    def parse_icd10_line(line: str) -> dict[str, str]:
-        """
-        Parses a single line of the CMS ICD-10 fixed-width text file.
-        Uses defensive slice parameters to protect the long description.
-        """
-        # Ensure the line is long enough to parse
-        if len(line) < 72:
-            raise ValueError(f"Line is too short to be a valid ICD-10 CMS fixed-width string: {line!r}")
-
-        return {
-            "raw_code": line[0:7].strip(),
-            "hipaa_flag": line[8:9].strip(),
-            "short_description": line[10:70].strip(),
-            "long_description": line[71:].strip(),
-        }
-
-    @staticmethod
-    def extract_and_parse(local_zip_path: str, fiscal_year: int) -> Generator[dict[str, Any]]:
-        """
-        Reads the local ZIP file, locates the '.txt' file with 'icd10cm_codes' in the name,
-        and yields dict payloads for the Bronze table, injecting ingestion_ts.
-        """
-        logger.info(f"Extracting local ZIP payload from: {local_zip_path}")
-
+    def extract_and_parse(local_zip_path: str, fiscal_year: int) -> Generator[dict[str, Any], None, None]:
+        logger.info(f"Extracting OMOP payload from: {local_zip_path}")
         ingestion_ts = datetime.now(UTC)
 
         with zipfile.ZipFile(local_zip_path, "r") as z:
-            # Locate the correct text file in the ZIP (case-insensitive check)
-            target_filename = None
-            for name in z.namelist():
-                if "icd10cm_codes" in name.lower() and name.lower().endswith(".txt"):
-                    target_filename = name
-                    break
+            # Target the OMOP CONCEPT file
+            if "CONCEPT.csv" not in z.namelist():
+                raise FileNotFoundError("Could not find CONCEPT.csv in the OMOP ZIP file.")
 
-            if not target_filename:
-                raise FileNotFoundError(f"Could not find a valid ICD-10 codes text file in the ZIP at {local_zip_path}")
+            logger.info("Extracting and parsing CONCEPT.csv")
 
-            logger.info(f"Extracting and parsing text file: {target_filename}")
-
-            with z.open(target_filename) as f:
-                for line_bytes in f:
-                    line = line_bytes.decode("utf-8").rstrip("\r\n").rstrip("\n")
-                    if not line.strip():
-                        continue
-
-                    parsed_dict = EpistemicIcd10ExtractionTask.parse_icd10_line(line)
-                    yield {
-                        "fiscal_year": fiscal_year,
-                        "raw_code": parsed_dict["raw_code"],
-                        "ingestion_ts": ingestion_ts,
-                        "raw_data": parsed_dict,
-                    }
+            with z.open("CONCEPT.csv") as f:
+                # OMOP files are typically tab-separated (\t). If yours is comma-separated, change delimiter to ','
+                reader = csv.DictReader(io.TextIOWrapper(f, encoding='utf-8'), delimiter='\t')
+                
+                for row in reader:
+                    # Filter only for ICD-10 concepts if necessary
+                    if row.get("vocabulary_id", "").startswith("ICD10"):
+                        yield {
+                            "fiscal_year": fiscal_year,
+                            "raw_code": row.get("concept_code", ""),
+                            "ingestion_ts": ingestion_ts,
+                            "raw_data": {
+                                "raw_code": row.get("concept_code", ""),
+                                "short_description": row.get("concept_name", "")[:60], # Map OMOP concept_name
+                                "long_description": row.get("concept_name", ""),
+                                "hipaa_flag": "1" if row.get("standard_concept") == "S" else "0"
+                            },
+                        }

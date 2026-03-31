@@ -1,0 +1,12 @@
+coreason_etl_icd10:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      user: adarsh
+      password: adarsh123
+      port: 5432
+      dbname: snomed
+      schema: public
+      threads: 4

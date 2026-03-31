@@ -7,7 +7,7 @@ name = "coreason_etl_icd_10"
 dynamic = ["version"]
 description = "Modern diagnostic coding system providing enhanced specificity for healthcare data"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 authors = [
     { name = "Akshaya M", email = "akshaya.movvar@coreason.ai" },
 ]
@@ -93,5 +93,3 @@ omit = ["tests/*"]
 [tool.deptry]
 ignore = ["DEP002"]
 
-[tool.uv.sources]
-dbt-extractor = { path = "tests/dbt-extractor-mock" }
