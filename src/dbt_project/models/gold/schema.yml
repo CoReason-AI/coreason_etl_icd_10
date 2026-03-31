@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: gold_icd10_clinical_index
+  - name: coreason_etl_icd_10_gold_icd10_clinical_index
     description: "Gold layer clinical index for searchable ICD-10 codes."
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -38,7 +38,7 @@ models:
       - name: is_billable
         description: "Boolean indicating if the code is billable."
 
-  - name: gold_icd10_billable_leaves
+  - name: coreason_etl_icd_10_gold_icd10_billable_leaves
     description: "Gold layer billable leaves for ICD-10 codes."
     tests:
       - dbt_utils.unique_combination_of_columns:

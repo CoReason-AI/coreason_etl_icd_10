@@ -22,5 +22,7 @@ models:
   coreason_etl_icd10:
     silver:
       +materialized: table
+      +schema: silver
     gold:
       +materialized: view
+      +schema: gold
