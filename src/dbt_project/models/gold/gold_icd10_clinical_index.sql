@@ -7,6 +7,7 @@
 
 WITH ranked_descriptions AS (
     SELECT
+        coreason_id,
         formatted_icd10_code,
         long_description,
         fiscal_year,
@@ -22,6 +23,7 @@ WITH ranked_descriptions AS (
 )
 
 SELECT
+    coreason_id,
     formatted_icd10_code,
     long_description,
     fiscal_year,
