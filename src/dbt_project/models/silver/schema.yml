@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: icd10_ontology
+  - name: coreason_etl_icd_10_silver_icd10_ontology
     description: "Silver layer clean table standardizing ICD-10 codes."
     tests:
       - dbt_utils.unique_combination_of_columns:

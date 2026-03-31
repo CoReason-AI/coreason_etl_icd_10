@@ -19,7 +19,7 @@ WITH ranked_descriptions AS (
             PARTITION BY formatted_icd10_code
             ORDER BY fiscal_year DESC
         ) as rn
-    FROM {{ ref('icd10_ontology') }}
+    FROM {{ ref('coreason_etl_icd_10_silver_icd10_ontology') }}
 )
 
 SELECT
